@@ -9,13 +9,14 @@
     body { font-family: sans-serif; margin: 20px; background-color: #f8f9fa; color: #333; }
     h1 { text-align: center; margin-bottom: 0.25rem; }
     h2 { margin-top: 2rem; }
-    .subtitle { text-align: center; font-size: 1.2rem; font-weight: bold; color: #666; margin-bottom: 1rem; }
+    .subtitle { text-align: center; font-size: 1.3rem; font-weight: 600; color: #555; margin-bottom: 1rem; }
     table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
     th, td { padding: 10px; border: 1px solid #ccc; text-align: center; }
     th { background-color: #007bff; color: white; }
     .note { font-size: 0.9rem; margin-top: 2rem; color: #666; }
     .chart-container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; margin-top: 2rem; }
     .chart-box { width: 200px; text-align: center; }
+    canvas { display: block; margin: 0 auto; }
   </style>
 </head>
 <body>
@@ -63,7 +64,8 @@
       { name: "Vitamin B12 (μg)", intake: 0.8, rdaM: 2.4, rdaF: 2.4 },
       { name: "Pantothenic acid (mg)", intake: 1.5, rdaM: 5, rdaF: 5 },
       { name: "Calcium (mg)", intake: 300, rdaM: 800, rdaF: 700 },
-      { name: "Sodium (mg)", intake: 840.3, rdaM: 2000, rdaF: 2000 }
+      { name: "Sodium (mg)", intake: 840.3, rdaM: 2000, rdaF: 2000 },
+      { name: "Iron (mg)", intake: 4.2, rdaM: 10, rdaF: 14 }
     ];
 
     const tableBody = document.getElementById("nutrient-table-body");
@@ -79,52 +81,25 @@
         deficiencies.push(nutrient.name);
       }
 
-      const row = `
-        <tr>
-          <td>${nutrient.name}</td>
-          <td>${nutrient.intake}</td>
-          <td>${nutrient.rdaM}</td>
-          <td>
-            ${percentM}%
-            <canvas id="miniChartM${i}" width="40" height="40"></canvas>
-          </td>
-          <td>${nutrient.rdaF}</td>
-          <td>${percentF}%</td>
-        </tr>`;
-      tableBody.innerHTML += row;
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${nutrient.name}</td>
+        <td>${nutrient.intake}</td>
+        <td>${nutrient.rdaM}</td>
+        <td>
+          ${percentM}%
+          <canvas id="miniChartM${i}" width="40" height="40"></canvas>
+        </td>
+        <td>${nutrient.rdaF}</td>
+        <td>
+          ${percentF}%
+          <canvas id="miniChartF${i}" width="40" height="40"></canvas>
+        </td>
+      `;
+      tableBody.appendChild(row);
 
-      const canvas = document.createElement("canvas");
-      canvas.id = `chart${i}`;
-      const box = document.createElement("div");
-      box.className = "chart-box";
-      box.appendChild(canvas);
-      chartArea.appendChild(box);
-
-      new Chart(canvas, {
-        type: "doughnut",
-        data: {
-          labels: ["% Achieved", "% Remaining"],
-          datasets: [{
-            data: [percentM, 100 - percentM],
-            backgroundColor: ["#28a745", "#e0e0e0"],
-            borderWidth: 1
-          }]
-        },
-        options: {
-          plugins: {
-            title: {
-              display: true,
-              text: nutrient.name,
-              font: { size: 14 }
-            },
-            legend: { display: false }
-          },
-          cutout: "60%"
-        }
-      });
-
-      const miniCtx = document.getElementById(`miniChartM${i}`).getContext("2d");
-      new Chart(miniCtx, {
+      const miniCtxM = document.getElementById(`miniChartM${i}`).getContext("2d");
+      new Chart(miniCtxM, {
         type: "doughnut",
         data: {
           datasets: [{
@@ -135,7 +110,23 @@
         },
         options: {
           responsive: false,
-          maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { enabled: false } },
+          cutout: "70%"
+        }
+      });
+
+      const miniCtxF = document.getElementById(`miniChartF${i}`).getContext("2d");
+      new Chart(miniCtxF, {
+        type: "doughnut",
+        data: {
+          datasets: [{
+            data: [percentF, 100 - percentF],
+            backgroundColor: ["#ffc107", "#e0e0e0"],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: false,
           plugins: { legend: { display: false }, tooltip: { enabled: false } },
           cutout: "70%"
         }
